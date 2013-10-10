@@ -11,3 +11,12 @@
 *.lai
 *.la
 *.a
+
+
+# VS files
+addons.make
+*.opensdf
+*.sdf
+*.suo
+bin/
+obj/
