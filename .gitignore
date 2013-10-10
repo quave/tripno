@@ -14,7 +14,6 @@
 
 
 # VS files
-addons.make
 *.opensdf
 *.sdf
 *.suo
