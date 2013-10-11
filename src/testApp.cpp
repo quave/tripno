@@ -3,6 +3,7 @@
 #define SEGMENTS_PER_VIEWPORT 20
 #define SEGMENT_MAX_HEIGHT_PART 0.2
 #define MOVEMENT_SPEED 100 // Pixels per second
+#define VIEWPORT_ASPECT 1.77777778
 
 ofPoint ceilSegments[SEGMENTS_PER_VIEWPORT+1], floorSegments[SEGMENTS_PER_VIEWPORT+1];
 
@@ -19,10 +20,10 @@ void testApp::setup(){
 	float minSegmentHeight = maxSegmentHeight / 2;
 
 	ofSeedRandom();
-	
+
 	for (int i = 0; i < SEGMENTS_PER_VIEWPORT + 1; ++i) {
 		ceilSegments[i] = ofPoint(i * segmentWidth, ofRandom(minSegmentHeight, maxSegmentHeight));
-		
+
 		float floorSermentHeight = ofRandom(minSegmentHeight, maxSegmentHeight);
 		floorSegments[i] = ofPoint(i * segmentWidth, floorSermentHeight);
 	}
@@ -43,19 +44,25 @@ void moveSegments(int index) {
 
 	ceilSegments[SEGMENTS_PER_VIEWPORT].x += segmentWidth;
 	ceilSegments[SEGMENTS_PER_VIEWPORT].y = ofRandom(minSegmentHeight, maxSegmentHeight);
-	
+
 	floorSegments[SEGMENTS_PER_VIEWPORT].x += segmentWidth;
 	float floorSermentHeight = ofRandom(minSegmentHeight, maxSegmentHeight);
 	floorSegments[SEGMENTS_PER_VIEWPORT].y = floorSermentHeight;
 }
 
 //--------------------------------------------------------------
+unsigned long long timeElapsed = 0;
 void testApp::update(){
-	float dt = ofGetElapsedTimeMillis() / 1000.f;
-	ofResetElapsedTimeCounter();
+    unsigned long long now = ofGetElapsedTimeMillis();
+	float dt = (now - timeElapsed) / 1000.f;
+	timeElapsed = now;
+
 	float offset = MOVEMENT_SPEED * dt;
 
 	ofRectangle viewPort = ofGetCurrentViewport();
+	ofRectangle gameField = viewPort;
+	gameField.height = viewPort.width / VIEWPORT_ASPECT;
+
 	float segmentWidth = ceil(viewPort.width / SEGMENTS_PER_VIEWPORT);
 
 	for (int i = 0; i < SEGMENTS_PER_VIEWPORT + 1; ++i) {
@@ -130,6 +137,6 @@ void testApp::gotMessage(ofMessage msg){
 }
 
 //--------------------------------------------------------------
-void testApp::dragEvent(ofDragInfo dragInfo){ 
+void testApp::dragEvent(ofDragInfo dragInfo){
 
 }
