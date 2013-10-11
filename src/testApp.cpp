@@ -8,6 +8,7 @@
 
 int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
 ofRectangle skyline[SEGMENTS_STORED], earthline[SEGMENTS_STORED];
+ofRectangle paddingTop, paddingBottom;
 
 //--------------------------------------------------------------
 void testApp::setup(){
@@ -18,7 +19,10 @@ void testApp::setup(){
 
     for (int i = 0; i < SEGMENTS_STORED; ++i) {
         ceilHeights[i] = floorHeights[i] = 0;
+		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
     }
+
+	paddingTop = paddingBottom = ofRectangle(0,0,0,0);
 
 	ofLogVerbose() << "setup finished";
 }
@@ -32,8 +36,8 @@ void moveSegments(int index) {
 		earthline[i-1] = earthline[i];
 	}
 
-	ceilHeights[SEGMENTS_STORED - 1] = 0;
-	floorHeights[SEGMENTS_STORED - 1] = 0;
+	floorHeights[SEGMENTS_STORED - 1] = ceilHeights[SEGMENTS_STORED - 1] = 0;
+	earthline[SEGMENTS_STORED - 1] = skyline[SEGMENTS_STORED - 1] = ofRectangle(0,0,0,0);
 }
 
 //--------------------------------------------------------------
@@ -53,24 +57,36 @@ void testApp::update(){
 
 	ofRectangle gameField = viewPort;
 
+
 	gameField.height = viewPort.width / VIEWPORT_ASPECT;
 	gameField.y = (viewPort.height - gameField.height) / 2;
+
+	if (paddingTop.width == 0) {
+		paddingTop = ofRectangle(0, 0, viewPort.width, gameField.y);
+	}
+	if (paddingBottom.width == 0) {
+		paddingBottom = ofRectangle(0, viewPort.height - gameField.y, viewPort.width, gameField.y);
+	}
 
 	float segmentWidth = ceil(gameField.width / SEGMENTS_PER_VIEWPORT);
 	float maxSegmentHeight = gameField.height * SEGMENT_MAX_HEIGHT_PART;
 	float minSegmentHeight = maxSegmentHeight / 2;
 
 	for (int i = 0; i < SEGMENTS_STORED; ++i) {
-	    if (ceilHeights[i] == 0) {// generate
+	    if (ceilHeights[i] == 0) {// generate hights
+            ceilHeights[i] = ofRandom(minSegmentHeight, maxSegmentHeight);
+            floorHeights[i] = ofRandom(minSegmentHeight, maxSegmentHeight);
+	    }
+
+		if (skyline[i].width == 0) { // generate rectangles
             float startX = i==0 ? 0 : skyline[i-1].x + segmentWidth;
 
-            ceilHeights[i] = ofRandom(minSegmentHeight, maxSegmentHeight);
             skyline[i] = ofRectangle(startX, gameField.y, segmentWidth, ceilHeights[i]);
-
-            floorHeights[i] = ofRandom(minSegmentHeight, maxSegmentHeight);
             earthline[i] = ofRectangle(startX, gameField.y + gameField.height - floorHeights[i],
                                        segmentWidth, floorHeights[i]);
-	    }
+			
+			//ofLogVerbose() << "Gen rect viewPort="<< viewPort;
+		}
 	    else {
             skyline[i].x -= offset;
             earthline[i].x -= offset;
@@ -89,7 +105,9 @@ void testApp::draw(){
     ofFill();
 
 	ofRectangle viewPort = ofGetCurrentViewport();
-	float segmentWidth = ceil(viewPort.width / SEGMENTS_PER_VIEWPORT);
+
+	ofRect(paddingTop);
+	ofRect(paddingBottom);
 
 	for (int i = 0; i < SEGMENTS_STORED; ++i) {
 		ofRect(skyline[i]);
@@ -133,7 +151,14 @@ void testApp::mouseReleased(int x, int y, int button){
 
 //--------------------------------------------------------------
 void testApp::windowResized(int w, int h){
+	for (int i = 0; i < SEGMENTS_STORED; ++i) {
+		skyline[i] = ofRectangle(0,0,0,0);
+		earthline[i] = ofRectangle(0,0,0,0);
+	}
 
+	paddingTop = paddingBottom = ofRectangle(0,0,0,0);
+	
+	ofLogVerbose() << "Resized w=" << w << ", h=" << h;
 }
 
 //--------------------------------------------------------------
