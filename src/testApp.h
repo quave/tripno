@@ -18,5 +18,16 @@ class testApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+
+		
+		void audioIn(float * input, int bufferSize, int nChannels); 
+	
+		vector <float> left;
+		vector <float> right;
+		
+		int bufferCounter;
+		int drawCounter;
+		
+		ofSoundStream soundStream;
 		
 };

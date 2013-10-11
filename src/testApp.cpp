@@ -12,11 +12,38 @@ ofRectangle paddingTop, paddingBottom;
 
 //--------------------------------------------------------------
 void testApp::setup(){
+	
+	// init logs
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	ofLogVerbose() << "setup started";
 
+	// init vertical sync and some graphics
+	ofSetVerticalSync(true);
+	ofSetCircleResolution(80);
+	ofBackground(47, 52, 64);
+
+	// init audio
+	// 0 output channels, 
+	// 2 input channels
+	// 44100 samples per second
+	// 256 samples per buffer
+	// 4 num buffers (latency)
+	
+	soundStream.listDevices();
+	int bufferSize = 256;
+
+	left.assign(bufferSize, 0.0);
+	right.assign(bufferSize, 0.0);
+	
+	bufferCounter	= 0;
+	drawCounter		= 0;
+
+	soundStream.setup(this, 0, 2, 44100, bufferSize, 4);
+
+	// seed random
 	ofSeedRandom();
 
+	// init scene objects
     for (int i = 0; i < SEGMENTS_STORED; ++i) {
         ceilHeights[i] = floorHeights[i] = 0;
 		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
@@ -47,6 +74,7 @@ void testApp::update(){
 	float dt = (now - timeElapsed) / 1000.f;
 	timeElapsed = now;
 
+	// update scene
 	float offset = MOVEMENT_SPEED * dt;
 
 	ofRectangle viewPort = ofGetCurrentViewport();
@@ -96,11 +124,11 @@ void testApp::update(){
             }
 	    }
 	}
+
 }
 
 //--------------------------------------------------------------
 void testApp::draw(){
-	ofBackground(47, 52, 64);
 	ofSetColor(63, 83, 140);
     ofFill();
 
@@ -120,8 +148,31 @@ void testApp::draw(){
 }
 
 //--------------------------------------------------------------
-void testApp::keyPressed(int key){
+void testApp::audioIn(float * input, int bufferSize, int nChannels){	
+	
+	// samples are "interleaved"
+	int numCounted = bufferSize * nChannels;	
 
+	//lets go through each sample and calculate the root mean square which is a rough way to calculate volume	
+	for (int i = 0; i < bufferSize; i++){
+		left[i]		= input[i*2]*0.5;
+		right[i]	= input[i*2+1]*0.5;
+
+		ofLogVerbose() << left[i] << " " << right[i];
+	}
+
+	bufferCounter++;	
+}
+
+//--------------------------------------------------------------
+void testApp::keyPressed  (int key){ 
+	if( key == 's' ){
+		soundStream.start();
+	}
+	
+	if( key == 'e' ){
+		soundStream.stop();
+	}
 }
 
 //--------------------------------------------------------------
