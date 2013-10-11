@@ -46,10 +46,15 @@ void testApp::update(){
 	float offset = MOVEMENT_SPEED * dt;
 
 	ofRectangle viewPort = ofGetCurrentViewport();
+
+	if (viewPort.width == 0 || viewPort.height == 0) {
+		return;
+	}
+
 	ofRectangle gameField = viewPort;
 
 	gameField.height = viewPort.width / VIEWPORT_ASPECT;
-	gameField.x = (viewPort.height - gameField.height) / 2;
+	gameField.y = (viewPort.height - gameField.height) / 2;
 
 	float segmentWidth = ceil(gameField.width / SEGMENTS_PER_VIEWPORT);
 	float maxSegmentHeight = gameField.height * SEGMENT_MAX_HEIGHT_PART;
@@ -57,7 +62,7 @@ void testApp::update(){
 
 	for (int i = 0; i < SEGMENTS_STORED; ++i) {
 	    if (ceilHeights[i] == 0) {// generate
-            float startX = i==0 ? 0 : skyline[i-1].x;
+            float startX = i==0 ? 0 : skyline[i-1].x + segmentWidth;
 
             ceilHeights[i] = ofRandom(minSegmentHeight, maxSegmentHeight);
             skyline[i] = ofRectangle(startX, gameField.y, segmentWidth, ceilHeights[i]);
