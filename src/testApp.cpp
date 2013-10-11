@@ -1,21 +1,13 @@
 #include "testApp.h"
 
-#define SEGMENTS_PER_VIEWPORT 20
-#define SEGMENTS_STORED SEGMENTS_PER_VIEWPORT + 1
-#define SEGMENT_MAX_HEIGHT_PART 0.2
-#define MOVEMENT_SPEED 100 // Pixels per second
-#define VIEWPORT_ASPECT 1.77777778
-
-int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
-ofRectangle skyline[SEGMENTS_STORED], earthline[SEGMENTS_STORED];
-ofRectangle paddingTop, paddingBottom;
-
 //--------------------------------------------------------------
 void testApp::setup(){
 	
 	// init logs
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	ofLogVerbose() << "setup started";
+
+	timeElapsed = 0;
 
 	// init vertical sync and some graphics
 	ofSetVerticalSync(true);
@@ -54,7 +46,7 @@ void testApp::setup(){
 	ofLogVerbose() << "setup finished";
 }
 
-void moveSegments(int index) {
+void testApp::moveSegments(int index) {
 	for (int i = index + 1; i < SEGMENTS_STORED; ++i) {
 		ceilHeights[i-1] = ceilHeights[i];
 		floorHeights[i-1] = floorHeights[i];
@@ -68,7 +60,6 @@ void moveSegments(int index) {
 }
 
 //--------------------------------------------------------------
-unsigned long long timeElapsed = 0;
 void testApp::update(){
     unsigned long long now = ofGetElapsedTimeMillis();
 	float dt = (now - timeElapsed) / 1000.f;
@@ -157,8 +148,6 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 	for (int i = 0; i < bufferSize; i++){
 		left[i]		= input[i*2]*0.5;
 		right[i]	= input[i*2+1]*0.5;
-
-		ofLogVerbose() << left[i] << " " << right[i];
 	}
 
 	bufferCounter++;	
@@ -209,7 +198,7 @@ void testApp::windowResized(int w, int h){
 
 	paddingTop = paddingBottom = ofRectangle(0,0,0,0);
 	
-	ofLogVerbose() << "Resized w=" << w << ", h=" << h;
+	// ofLogVerbose() << "Resized w=" << w << ", h=" << h;
 }
 
 //--------------------------------------------------------------

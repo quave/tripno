@@ -2,6 +2,12 @@
 
 #include "ofMain.h"
 
+#define SEGMENTS_PER_VIEWPORT 20
+#define SEGMENTS_STORED SEGMENTS_PER_VIEWPORT + 1
+#define SEGMENT_MAX_HEIGHT_PART 0.2
+#define MOVEMENT_SPEED 100 // Pixels per second
+#define VIEWPORT_ASPECT 1.77777778
+
 class testApp : public ofBaseApp{
 
 	public:
@@ -19,15 +25,22 @@ class testApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 
-		
 		void audioIn(float * input, int bufferSize, int nChannels); 
 	
+private:
 		vector <float> left;
 		vector <float> right;
 		
 		int bufferCounter;
 		int drawCounter;
-		
+
+		unsigned long long timeElapsed;
+
 		ofSoundStream soundStream;
 		
+		int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
+		ofRectangle skyline[SEGMENTS_STORED], earthline[SEGMENTS_STORED];
+		ofRectangle paddingTop, paddingBottom;
+
+		void moveSegments(int index);
 };
