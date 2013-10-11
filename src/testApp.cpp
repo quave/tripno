@@ -1,53 +1,39 @@
 #include "testApp.h"
 
 #define SEGMENTS_PER_VIEWPORT 20
+#define SEGMENTS_STORED SEGMENTS_PER_VIEWPORT + 1
 #define SEGMENT_MAX_HEIGHT_PART 0.2
 #define MOVEMENT_SPEED 100 // Pixels per second
 #define VIEWPORT_ASPECT 1.77777778
 
-ofPoint ceilSegments[SEGMENTS_PER_VIEWPORT+1], floorSegments[SEGMENTS_PER_VIEWPORT+1];
+int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
+ofRectangle skyline[SEGMENTS_STORED], earthline[SEGMENTS_STORED];
 
 //--------------------------------------------------------------
 void testApp::setup(){
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	ofLogVerbose() << "setup started";
 
-	ofResetElapsedTimeCounter();
-
-	ofRectangle viewPort = ofGetCurrentViewport();
-	float segmentWidth = ceil(viewPort.width / SEGMENTS_PER_VIEWPORT);
-	float maxSegmentHeight = viewPort.height * SEGMENT_MAX_HEIGHT_PART;
-	float minSegmentHeight = maxSegmentHeight / 2;
-
 	ofSeedRandom();
 
-	for (int i = 0; i < SEGMENTS_PER_VIEWPORT + 1; ++i) {
-		ceilSegments[i] = ofPoint(i * segmentWidth, ofRandom(minSegmentHeight, maxSegmentHeight));
-
-		float floorSermentHeight = ofRandom(minSegmentHeight, maxSegmentHeight);
-		floorSegments[i] = ofPoint(i * segmentWidth, floorSermentHeight);
-	}
+    for (int i = 0; i < SEGMENTS_STORED; ++i) {
+        ceilHeights[i] = floorHeights[i] = 0;
+    }
 
 	ofLogVerbose() << "setup finished";
 }
 
 void moveSegments(int index) {
-	for (int i = index + 1; i < SEGMENTS_PER_VIEWPORT + 1; ++i) {
-		ceilSegments[i-1] = ceilSegments[i];
-		floorSegments[i-1] = floorSegments[i];
+	for (int i = index + 1; i < SEGMENTS_STORED; ++i) {
+		ceilHeights[i-1] = ceilHeights[i];
+		floorHeights[i-1] = floorHeights[i];
+
+		skyline[i-1] = skyline[i];
+		earthline[i-1] = earthline[i];
 	}
 
-	ofRectangle viewPort = ofGetCurrentViewport();
-	float segmentWidth = ceil(viewPort.width / SEGMENTS_PER_VIEWPORT);
-	float maxSegmentHeight = viewPort.height * SEGMENT_MAX_HEIGHT_PART;
-	float minSegmentHeight = maxSegmentHeight / 2;
-
-	ceilSegments[SEGMENTS_PER_VIEWPORT].x += segmentWidth;
-	ceilSegments[SEGMENTS_PER_VIEWPORT].y = ofRandom(minSegmentHeight, maxSegmentHeight);
-
-	floorSegments[SEGMENTS_PER_VIEWPORT].x += segmentWidth;
-	float floorSermentHeight = ofRandom(minSegmentHeight, maxSegmentHeight);
-	floorSegments[SEGMENTS_PER_VIEWPORT].y = floorSermentHeight;
+	ceilHeights[SEGMENTS_STORED - 1] = 0;
+	floorHeights[SEGMENTS_STORED - 1] = 0;
 }
 
 //--------------------------------------------------------------
@@ -61,20 +47,34 @@ void testApp::update(){
 
 	ofRectangle viewPort = ofGetCurrentViewport();
 	ofRectangle gameField = viewPort;
+
 	gameField.height = viewPort.width / VIEWPORT_ASPECT;
+	gameField.x = (viewPort.height - gameField.height) / 2;
 
-	float segmentWidth = ceil(viewPort.width / SEGMENTS_PER_VIEWPORT);
+	float segmentWidth = ceil(gameField.width / SEGMENTS_PER_VIEWPORT);
+	float maxSegmentHeight = gameField.height * SEGMENT_MAX_HEIGHT_PART;
+	float minSegmentHeight = maxSegmentHeight / 2;
 
-	for (int i = 0; i < SEGMENTS_PER_VIEWPORT + 1; ++i) {
-		ceilSegments[i].x -= offset;
-		floorSegments[i].x -= offset;
+	for (int i = 0; i < SEGMENTS_STORED; ++i) {
+	    if (ceilHeights[i] == 0) {// generate
+            float startX = i==0 ? 0 : skyline[i-1].x;
 
-		if (ceilSegments[i].x < -segmentWidth) {
-			moveSegments(i);
-		}
+            ceilHeights[i] = ofRandom(minSegmentHeight, maxSegmentHeight);
+            skyline[i] = ofRectangle(startX, gameField.y, segmentWidth, ceilHeights[i]);
+
+            floorHeights[i] = ofRandom(minSegmentHeight, maxSegmentHeight);
+            earthline[i] = ofRectangle(startX, gameField.y + gameField.height - floorHeights[i],
+                                       segmentWidth, floorHeights[i]);
+	    }
+	    else {
+            skyline[i].x -= offset;
+            earthline[i].x -= offset;
+
+            if (skyline[i].x < -segmentWidth) {
+                moveSegments(i);
+            }
+	    }
 	}
-
-	ofLogVerbose() << "update finished, dt=" << dt;
 }
 
 //--------------------------------------------------------------
@@ -86,9 +86,9 @@ void testApp::draw(){
 	ofRectangle viewPort = ofGetCurrentViewport();
 	float segmentWidth = ceil(viewPort.width / SEGMENTS_PER_VIEWPORT);
 
-	for (int i = 0; i < SEGMENTS_PER_VIEWPORT + 1; ++i) {
-		ofRect(ceilSegments[i].x, 0, segmentWidth, ceilSegments[i].y);
-		ofRect(floorSegments[i].x, viewPort.height, segmentWidth, -ceilSegments[i].y);
+	for (int i = 0; i < SEGMENTS_STORED; ++i) {
+		ofRect(skyline[i]);
+		ofRect(earthline[i]);
 	}
 
 	ofSetColor(255, 85, 84);
