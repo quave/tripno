@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxFft.h"
 
 #define SEGMENTS_PER_VIEWPORT 20
 #define SEGMENTS_STORED SEGMENTS_PER_VIEWPORT + 1

@@ -44,6 +44,8 @@
     <TargetName>$(ProjectName)_debug</TargetName>
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
+    <IncludePath>C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\libs\fftw\include;C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\libs\kiss;C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\src;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\libs\fftw\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>bin\</OutDir>
@@ -91,10 +93,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\addons\ofxFft\libs\kiss\kiss_fft.c" />
+    <ClCompile Include="..\..\..\addons\ofxFft\libs\kiss\kiss_fftr.c" />
+    <ClCompile Include="..\..\..\addons\ofxFft\src\ofxEasyFft.cpp" />
+    <ClCompile Include="..\..\..\addons\ofxFft\src\ofxFft.cpp" />
+    <ClCompile Include="..\..\..\addons\ofxFft\src\ofxFftBasic.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\testApp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\addons\ofxFft\libs\kiss\kiss_fft.h" />
+    <ClInclude Include="..\..\..\addons\ofxFft\libs\kiss\kiss_fftr.h" />
+    <ClInclude Include="..\..\..\addons\ofxFft\libs\kiss\_kiss_fft_guts.h" />
+    <ClInclude Include="..\..\..\addons\ofxFft\src\ofxEasyFft.h" />
+    <ClInclude Include="..\..\..\addons\ofxFft\src\ofxFft.h" />
+    <ClInclude Include="..\..\..\addons\ofxFft\src\ofxFftBasic.h" />
     <ClInclude Include="src\testApp.h" />
   </ItemGroup>
   <ItemGroup>
