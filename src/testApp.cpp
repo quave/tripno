@@ -22,15 +22,19 @@ void testApp::setup(){
 	// 4 num buffers (latency)
 	
 	soundStream.listDevices();
-	int bufferSize = 256;
 
-	left.assign(bufferSize, 0.0);
-	right.assign(bufferSize, 0.0);
+	fft = ofxFft::create(AUDIO_BUFFER_SIZE);
+
+	left.assign(AUDIO_BUFFER_SIZE, 0.0);
+	right.assign(AUDIO_BUFFER_SIZE, 0.0);
 	
 	bufferCounter	= 0;
 	drawCounter		= 0;
 
-	soundStream.setup(this, 0, 2, 44100, bufferSize, 4);
+	soundStream.setup(this, 0, 2, 44100, AUDIO_BUFFER_SIZE, 4);
+	audioInput = new float[AUDIO_BUFFER_SIZE];
+	fftOutput = new float[fft->getBinSize()];
+	ifftOutput = new float[AUDIO_BUFFER_SIZE];
 
 	// seed random
 	ofSeedRandom();
@@ -149,6 +153,23 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 		left[i]		= input[i*2]*0.5;
 		right[i]	= input[i*2+1]*0.5;
 	}
+
+	memcpy(audioInput, input, sizeof(float) * bufferSize);
+
+	fft->setSignal(audioInput);
+	memcpy(fftOutput, fft->getAmplitude(), sizeof(float) * fft->getBinSize());
+
+	string ouput = "";
+	for (int i = 0; i < fft->getBinSize()-1; i++)
+	{
+		ouput.append(" " + ofToString(audioInput[i]));
+	}
+
+	ofLogVerbose() << ouput;
+
+
+	fft->clampSignal();
+	memcpy(ifftOutput, fft->getSignal(), sizeof(float) * fft->getSignalSize());
 
 	bufferCounter++;	
 }

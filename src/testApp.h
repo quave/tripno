@@ -8,6 +8,7 @@
 #define SEGMENT_MAX_HEIGHT_PART 0.2
 #define MOVEMENT_SPEED 100 // Pixels per second
 #define VIEWPORT_ASPECT 1.77777778
+#define AUDIO_BUFFER_SIZE 512
 
 class testApp : public ofBaseApp{
 
@@ -31,6 +32,11 @@ class testApp : public ofBaseApp{
 private:
 		vector <float> left;
 		vector <float> right;
+
+		ofxFft* fft;
+		float* audioInput;
+		float* fftOutput;
+		float* ifftOutput;
 		
 		int bufferCounter;
 		int drawCounter;
@@ -42,6 +48,7 @@ private:
 		int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
 		ofRectangle skyline[SEGMENTS_STORED], earthline[SEGMENTS_STORED];
 		ofRectangle paddingTop, paddingBottom;
+
 
 		void moveSegments(int index);
 };
