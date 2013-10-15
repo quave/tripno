@@ -7,39 +7,10 @@ void testApp::setup(){
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	ofLogVerbose() << "setup started";
 
-	timeElapsed = 0;
-
-	// init vertical sync and some graphics
-	ofSetVerticalSync(true);
-	ofSetCircleResolution(80);
-	ofBackground(47, 52, 64);
-
-	// init audio
-	// 0 output channels, 
-	// 2 input channels
-	// 44100 samples per second
-	// 256 samples per buffer
-	// 4 num buffers (latency)
-	
-	soundStream.listDevices();
-
-	fft = ofxFft::create(AUDIO_BUFFER_SIZE);
-
-	left.assign(AUDIO_BUFFER_SIZE, 0.0);
-	right.assign(AUDIO_BUFFER_SIZE, 0.0);
-	
-	bufferCounter	= 0;
-	drawCounter		= 0;
-
-	soundStream.setup(this, 0, 2, 44100, AUDIO_BUFFER_SIZE, 4);
-	audioInput = new float[AUDIO_BUFFER_SIZE];
-	fftOutput = new float[fft->getBinSize()];
-	ifftOutput = new float[AUDIO_BUFFER_SIZE];
-
-	// seed random
-	ofSeedRandom();
-
 	// init scene objects
+	timeElapsed = 0;
+	currentIndex = 1;
+
     for (int i = 0; i < SEGMENTS_STORED; ++i) {
         ceilHeights[i] = floorHeights[i] = 0;
 		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
@@ -50,30 +21,40 @@ void testApp::setup(){
 
 	viewPort = ofGetCurrentViewport();
 
+	// init vertical sync and some graphics
+	ofSetVerticalSync(true);
+	ofSetCircleResolution(80);
+	ofBackground(47, 52, 64);
+
+	// init audio
+	soundStream.listDevices();
+
+	fft = ofxFft::create(AUDIO_BUFFER_SIZE);
+
+	left.assign(AUDIO_BUFFER_SIZE, 0.0);
+	right.assign(AUDIO_BUFFER_SIZE, 0.0);
+	
+	soundStream.setup(this, 0, 2, 44100, AUDIO_BUFFER_SIZE, 4);
+	audioInput = new float[AUDIO_BUFFER_SIZE];
+	fftOutput = new float[fft->getBinSize()];
+	ifftOutput = new float[AUDIO_BUFFER_SIZE];
+
+	// seed random
+	ofSeedRandom();
+
 	ofLogVerbose() << "setup finished";
-}
-
-void testApp::moveSegments(int index) {
-	for (int i = index + 1; i < SEGMENTS_STORED; ++i) {
-		ceilHeights[i-1] = ceilHeights[i];
-		floorHeights[i-1] = floorHeights[i];
-
-		skyline[i-1] = skyline[i];
-		earthline[i-1] = earthline[i];
-	}
-
-	floorHeights[SEGMENTS_STORED - 1] = ceilHeights[SEGMENTS_STORED - 1] = 0;
-	earthline[SEGMENTS_STORED - 1] = skyline[SEGMENTS_STORED - 1] = ofRectangle(0,0,0,0);
 }
 
 //--------------------------------------------------------------
 void testApp::update(){
     unsigned long long now = ofGetElapsedTimeMillis();
-	float dt = (now - timeElapsed) / 1000.f;
+	float dt = (now - timeElapsed) / 1000.0f;
 	timeElapsed = now;
 
 	// update scene
-	float offset = MOVEMENT_SPEED * dt;
+
+	//offset in segments
+	float beginOffset = MOVEMENT_SPEED * timeElapsed / 1000.0f;
 
 	if (viewPort.width == 0 || viewPort.height == 0) {
 		return;
@@ -83,6 +64,7 @@ void testApp::update(){
 
 	gameField.height = viewPort.width / VIEWPORT_ASPECT;
 	gameField.y = (viewPort.height - gameField.height) / 2;
+	float segmentWidth = ceil(gameField.width / SEGMENTS_PER_VIEWPORT);
 
 	if (paddingTop.width == 0) {
 		paddingTop = ofRectangle(0, 0, viewPort.width, gameField.y);
@@ -91,9 +73,11 @@ void testApp::update(){
 		paddingBottom = ofRectangle(0, viewPort.height - gameField.y, viewPort.width, gameField.y);
 	}
 
-	float segmentWidth = ceil(gameField.width / SEGMENTS_PER_VIEWPORT);
 	float maxSegmentHeight = gameField.height * SEGMENT_MAX_HEIGHT_PART;
 	float minSegmentHeight = maxSegmentHeight / 2;
+
+	// current offset in segments
+	float offset = beginOffset - currentIndex;
 
 	for (int i = 0; i < SEGMENTS_STORED; ++i) {
 	    if (ceilHeights[i] == 0) {// generate hights
@@ -109,8 +93,7 @@ void testApp::update(){
                                        segmentWidth, floorHeights[i]);
 		}
 	    else {
-            skyline[i].x -= offset;
-            earthline[i].x -= offset;
+			earthline[i].x = skyline[i].x = (i - offset) * segmentWidth ;
 
             if (skyline[i].x < -segmentWidth) {
                 moveSegments(i);
@@ -118,6 +101,30 @@ void testApp::update(){
 	    }
 	}
 
+	moveSegments(floor(beginOffset) - currentIndex);
+	currentIndex = floor(beginOffset);
+}
+
+//--------------------------------------------------------------
+void testApp::moveSegments(int count) {
+
+	if (count <= 0) {
+		return;
+	}
+
+	for (int i = 0; i < SEGMENTS_STORED - count; ++i) {
+		ceilHeights[i] = ceilHeights[i + count];
+		floorHeights[i] = floorHeights[i + count];
+
+		skyline[i] = skyline[i + count];
+		earthline[i] = earthline[i + count];
+	}
+
+	for (int i = SEGMENTS_STORED - count; i < SEGMENTS_STORED; i++)
+	{
+		floorHeights[i] = ceilHeights[i] = 0;
+		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
+	}
 }
 
 //--------------------------------------------------------------
@@ -127,6 +134,7 @@ void testApp::draw(){
 	plotFft();
 }
 
+//--------------------------------------------------------------
 void testApp::drawScene() {
 
 	ofSetColor(63, 83, 140);
@@ -146,6 +154,7 @@ void testApp::drawScene() {
 	ofCircle(viewPort.width * 0.3, viewPort.height * 0.5, viewPort.width * 0.03);
 }
 
+//--------------------------------------------------------------
 void testApp::plotFft() {
 	ofRectangle area = ofRectangle(0,0, gameField.width, gameField.y);
 	int count = fft->getBinSize();
