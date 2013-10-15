@@ -45,7 +45,7 @@ void testApp::setup(){
 		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
     }
 
-	paddingTop = paddingBottom = ofRectangle(0,0,0,0);
+	gameField = paddingTop = paddingBottom = ofRectangle(0,0,0,0);
 
 	ofLogVerbose() << "setup finished";
 }
@@ -78,8 +78,7 @@ void testApp::update(){
 		return;
 	}
 
-	ofRectangle gameField = viewPort;
-
+	gameField = viewPort;
 
 	gameField.height = viewPort.width / VIEWPORT_ASPECT;
 	gameField.y = (viewPort.height - gameField.height) / 2;
@@ -124,10 +123,18 @@ void testApp::update(){
 
 //--------------------------------------------------------------
 void testApp::draw(){
+	ofRectangle viewPort = ofGetCurrentViewport();
+
+	drawScene(viewPort);
+
+	plotFft(viewPort);
+}
+
+void testApp::drawScene(ofRectangle viewPort) {
+
 	ofSetColor(63, 83, 140);
     ofFill();
 
-	ofRectangle viewPort = ofGetCurrentViewport();
 
 	ofRect(paddingTop);
 	ofRect(paddingBottom);
@@ -142,12 +149,25 @@ void testApp::draw(){
 	ofCircle(viewPort.width * 0.3, viewPort.height * 0.5, viewPort.width * 0.03);
 }
 
+void testApp::plotFft(ofRectangle viewPort) {
+	ofRectangle area = ofRectangle(0,0, gameField.width, gameField.y);
+	int count = fft->getBinSize();
+	int lineHeight = 3;
+
+	ofSetColor(221, 221, 227);
+	ofSetLineWidth(lineHeight);
+
+	for (int i = 0; i < count; i++)
+	{
+		float height = fftOutput[i] * 10000;
+		float x = i * lineHeight * 2 + lineHeight;
+		ofLine(x, 0, x, height);
+	}
+}
+
 //--------------------------------------------------------------
 void testApp::audioIn(float * input, int bufferSize, int nChannels){	
 	
-	// samples are "interleaved"
-	int numCounted = bufferSize * nChannels;	
-
 	//lets go through each sample and calculate the root mean square which is a rough way to calculate volume	
 	for (int i = 0; i < bufferSize; i++){
 		left[i]		= input[i*2]*0.5;
@@ -159,19 +179,19 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 	fft->setSignal(audioInput);
 	memcpy(fftOutput, fft->getAmplitude(), sizeof(float) * fft->getBinSize());
 
-	string ouput = "";
+	float maxAmp = 0.0f;
 	for (int i = 0; i < fft->getBinSize()-1; i++)
 	{
-		ouput.append(" " + ofToString(audioInput[i]));
+		maxAmp = max(maxAmp, fftOutput[i]);
 	}
 
-	ofLogVerbose() << ouput;
-
+	/*for (int i = 0; i < fft->getBinSize()-1; i++)
+	{
+		fftOutput[i] /= maxAmp;
+	}*/
 
 	fft->clampSignal();
 	memcpy(ifftOutput, fft->getSignal(), sizeof(float) * fft->getSignalSize());
-
-	bufferCounter++;	
 }
 
 //--------------------------------------------------------------
