@@ -45,7 +45,10 @@ void testApp::setup(){
 		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
     }
 
-	gameField = paddingTop = paddingBottom = ofRectangle(0,0,0,0);
+	gameField = paddingTop = paddingBottom = 
+		ofRectangle(0,0,0,0);
+
+	viewPort = ofGetCurrentViewport();
 
 	ofLogVerbose() << "setup finished";
 }
@@ -71,8 +74,6 @@ void testApp::update(){
 
 	// update scene
 	float offset = MOVEMENT_SPEED * dt;
-
-	ofRectangle viewPort = ofGetCurrentViewport();
 
 	if (viewPort.width == 0 || viewPort.height == 0) {
 		return;
@@ -106,8 +107,6 @@ void testApp::update(){
             skyline[i] = ofRectangle(startX, gameField.y, segmentWidth, ceilHeights[i]);
             earthline[i] = ofRectangle(startX, gameField.y + gameField.height - floorHeights[i],
                                        segmentWidth, floorHeights[i]);
-			
-			//ofLogVerbose() << "Gen rect viewPort="<< viewPort;
 		}
 	    else {
             skyline[i].x -= offset;
@@ -123,14 +122,12 @@ void testApp::update(){
 
 //--------------------------------------------------------------
 void testApp::draw(){
-	ofRectangle viewPort = ofGetCurrentViewport();
+	drawScene();
 
-	drawScene(viewPort);
-
-	plotFft(viewPort);
+	plotFft();
 }
 
-void testApp::drawScene(ofRectangle viewPort) {
+void testApp::drawScene() {
 
 	ofSetColor(63, 83, 140);
     ofFill();
@@ -149,7 +146,7 @@ void testApp::drawScene(ofRectangle viewPort) {
 	ofCircle(viewPort.width * 0.3, viewPort.height * 0.5, viewPort.width * 0.03);
 }
 
-void testApp::plotFft(ofRectangle viewPort) {
+void testApp::plotFft() {
 	ofRectangle area = ofRectangle(0,0, gameField.width, gameField.y);
 	int count = fft->getBinSize();
 	int lineHeight = 3;
@@ -239,7 +236,8 @@ void testApp::windowResized(int w, int h){
 
 	paddingTop = paddingBottom = ofRectangle(0,0,0,0);
 	
-	// ofLogVerbose() << "Resized w=" << w << ", h=" << h;
+	viewPort.width = w;
+	viewPort.height = h;
 }
 
 //--------------------------------------------------------------

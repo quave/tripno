@@ -48,9 +48,9 @@ private:
 		int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
 		ofRectangle skyline[SEGMENTS_STORED], earthline[SEGMENTS_STORED];
 		ofRectangle paddingTop, paddingBottom;
-		ofRectangle gameField;
+		ofRectangle gameField, viewPort;
 
 		void moveSegments(int index);
-		void drawScene(ofRectangle viewPort);
-		void plotFft(ofRectangle viewPort);
+		void drawScene();
+		void plotFft();
 };
