@@ -158,43 +158,46 @@ void testApp::drawScene() {
 void testApp::plotFft() {
 	ofRectangle area = ofRectangle(0,0, gameField.width, gameField.y);
 	int count = fft->getBinSize();
-	int lineHeight = 3;
+	int lineHeight = 2;
 
 	ofSetColor(221, 221, 227);
 	ofSetLineWidth(lineHeight);
 
+	float maxAmp = 0.0f;
+	int maxIndex = -1;
 	for (int i = 0; i < count; i++)
 	{
-		float height = fftOutput[i] * 10000;
+		if (maxAmp >= fftOutput[i])
+			continue;
+
+		maxAmp = fftOutput[i];
+		maxIndex = i;
+	}
+
+	for (int i = 0; i < count; i++)
+	{
+		float gated = max(0.0f, fftOutput[i] - maxAmp * 0.2f);
+		float height = gated * 10000;
 		float x = i * lineHeight * 2 + lineHeight;
 		ofLine(x, 0, x, height);
 	}
+
+	ofSetColor(255, 85, 84);
+	ofDrawBitmapString(ofToString(maxAmp) + " at " + ofToString(maxIndex), 10, viewPort.height - 10);
 }
 
 //--------------------------------------------------------------
 void testApp::audioIn(float * input, int bufferSize, int nChannels){	
-	
-	//lets go through each sample and calculate the root mean square which is a rough way to calculate volume	
+
 	for (int i = 0; i < bufferSize; i++){
-		left[i]		= input[i*2]*0.5;
-		right[i]	= input[i*2+1]*0.5;
+		left[i]		= input[i*2];
+		right[i]	= input[i*2+1];
 	}
 
-	memcpy(audioInput, input, sizeof(float) * bufferSize);
+	memcpy(audioInput, left.data(), sizeof(float) * bufferSize);
 
 	fft->setSignal(audioInput);
 	memcpy(fftOutput, fft->getAmplitude(), sizeof(float) * fft->getBinSize());
-
-	float maxAmp = 0.0f;
-	for (int i = 0; i < fft->getBinSize()-1; i++)
-	{
-		maxAmp = max(maxAmp, fftOutput[i]);
-	}
-
-	/*for (int i = 0; i < fft->getBinSize()-1; i++)
-	{
-		fftOutput[i] /= maxAmp;
-	}*/
 
 	fft->clampSignal();
 	memcpy(ifftOutput, fft->getSignal(), sizeof(float) * fft->getSignalSize());
