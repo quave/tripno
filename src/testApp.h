@@ -8,7 +8,8 @@
 #define SEGMENT_MAX_HEIGHT_PART 0.2
 #define MOVEMENT_SPEED 2 // Segments per second
 #define VIEWPORT_ASPECT 1.77777778
-#define AUDIO_BUFFER_SIZE 512
+#define AUDIO_BUFFER_SIZE 4096
+#define MAX_FBAND 200
 
 class testApp : public ofBaseApp{
 

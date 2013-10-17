@@ -23,13 +23,13 @@ void testApp::setup(){
 
 	// init vertical sync and some graphics
 	ofSetVerticalSync(true);
-	ofSetCircleResolution(80);
+	ofSetCircleResolution(6);
 	ofBackground(47, 52, 64);
 
 	// init audio
 	soundStream.listDevices();
 
-	fft = ofxFft::create(AUDIO_BUFFER_SIZE);
+	fft = ofxFft::create(AUDIO_BUFFER_SIZE, OF_FFT_WINDOW_RECTANGULAR);
 
 	left.assign(AUDIO_BUFFER_SIZE, 0.0);
 	right.assign(AUDIO_BUFFER_SIZE, 0.0);
@@ -103,6 +103,25 @@ void testApp::update(){
 
 	moveSegments(floor(beginOffset) - currentIndex);
 	currentIndex = floor(beginOffset);
+    
+    
+    // update signal
+    
+	int count = fft->getBinSize();
+	float maxAmp = 0.0f;
+	int maxIndex = -1;
+	for (int i = 0; i < count; i++)
+	{
+		if (maxAmp >= fftOutput[i])
+			continue;
+        
+		maxAmp = fftOutput[i];
+		maxIndex = i;
+	}
+
+    for (int i = 0; i < count; ++i) {
+        fftOutput[i] /= maxAmp;
+    }
 }
 
 //--------------------------------------------------------------
@@ -174,16 +193,16 @@ void testApp::plotFft() {
 		maxIndex = i;
 	}
 
-	for (int i = 0; i < count; i++)
+	for (int i = 0; i < MAX_FBAND; i++)
 	{
-		float gated = max(0.0f, fftOutput[i] - maxAmp * 0.2f);
-		float height = gated * 10000;
+		//float gated = max(0.0f, fftOutput[i] - maxAmp * 0.2f);
+		float height = fftOutput[i] * 200;
 		float x = i * lineHeight * 2 + lineHeight;
 		ofLine(x, 0, x, height);
 	}
 
 	ofSetColor(255, 85, 84);
-	ofDrawBitmapString(ofToString(maxAmp) + " at " + ofToString(maxIndex), 10, viewPort.height - 10);
+	ofDrawBitmapString(ofToString(ofGetFrameRate()) + " " + ofToString(maxAmp) + " at " + ofToString(maxIndex) + " bin size=" + ofToString(count) , 10, viewPort.height - 10);
 }
 
 //--------------------------------------------------------------
