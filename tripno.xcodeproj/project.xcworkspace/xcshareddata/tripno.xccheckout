@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>A114474E-D272-4571-9487-6FF36B742E25</string>
+	<key>IDESourceControlProjectName</key>
+	<string>tripno</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>3B44CCC3-B2D3-4C6B-A929-BFD0C07CAFCA</key>
+		<string>https://github.com/quave/tripno.git</string>
+		<key>CD1FCC1B-88E0-4D20-B195-DC9E06E62388</key>
+		<string>https://github.com/kylemcdonald/ofxFft</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>tripno.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>3B44CCC3-B2D3-4C6B-A929-BFD0C07CAFCA</key>
+		<string>../..</string>
+		<key>CD1FCC1B-88E0-4D20-B195-DC9E06E62388</key>
+		<string>../../../../../addons/ofxFft</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/quave/tripno.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>3B44CCC3-B2D3-4C6B-A929-BFD0C07CAFCA</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>CD1FCC1B-88E0-4D20-B195-DC9E06E62388</string>
+			<key>IDESourceControlWCCName</key>
+			<string>ofxFft</string>
+		</dict>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>3B44CCC3-B2D3-4C6B-A929-BFD0C07CAFCA</string>
+			<key>IDESourceControlWCCName</key>
+			<string>tripno</string>
+		</dict>
+	</array>
+</dict>
+</plist>
