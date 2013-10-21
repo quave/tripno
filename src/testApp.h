@@ -29,6 +29,8 @@ class testApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 
 		void audioIn(float * input, int bufferSize, int nChannels); 
+
+		~testApp();
 	
 private:
 		int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
@@ -44,12 +46,13 @@ private:
 		ofxFft* fft;
 		float* audioInput;
 		float* fftOutput;
-		float* ifftOutput;
 		
 		unsigned long long timeElapsed;
 
 		ofSoundStream soundStream;
 		
+
+		ofMutex soundMutex;
 
 		void moveSegments(int index);
 		void drawScene();

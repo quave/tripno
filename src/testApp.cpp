@@ -37,7 +37,6 @@ void testApp::setup(){
 	soundStream.setup(this, 0, 2, 44100, AUDIO_BUFFER_SIZE, 4);
 	audioInput = new float[AUDIO_BUFFER_SIZE];
 	fftOutput = new float[fft->getBinSize()];
-	ifftOutput = new float[AUDIO_BUFFER_SIZE];
 
 	// seed random
 	ofSeedRandom();
@@ -103,25 +102,6 @@ void testApp::update(){
 
 	moveSegments(floor(beginOffset) - currentIndex);
 	currentIndex = floor(beginOffset);
-    
-    
-    // update signal
-    
-	int count = fft->getBinSize();
-	float maxAmp = 0.0f;
-	int maxIndex = -1;
-	for (int i = 0; i < count; i++)
-	{
-		if (maxAmp >= fftOutput[i])
-			continue;
-        
-		maxAmp = fftOutput[i];
-		maxIndex = i;
-	}
-
-    for (int i = 0; i < count; ++i) {
-        fftOutput[i] /= maxAmp;
-    }
 }
 
 //--------------------------------------------------------------
@@ -183,70 +163,80 @@ void testApp::plotFft() {
 	ofSetColor(221, 221, 227);
 	ofSetLineWidth(lineHeight);
 
+	float* buffer = new float[count];
+
+	soundMutex.lock();
+	memcpy(buffer, fftOutput, count);
+	soundMutex.unlock();
+
 	float maxAmp = 0.0f;
 	int maxIndex = -1;
 	for (int i = 0; i < count; i++)
 	{
-		if (maxAmp >= fftOutput[i])
+		if (maxAmp >= buffer[i])
 			continue;
 
-		maxAmp = fftOutput[i];
+		maxAmp = buffer[i];
 		maxIndex = i;
 	}
 
 	for (int i = 0; i < MAX_FBAND; i++)
 	{
-		//float gated = max(0.0f, fftOutput[i] - maxAmp * 0.2f);
-		float height = fftOutput[i] * 200;
+		float height = buffer[i] * 200;
 		float x = i * lineHeight * 2 + lineHeight;
 		ofLine(x, 0, x, height);
 	}
 
 	ofSetColor(255, 85, 84);
 	ofDrawBitmapString(ofToString(ofGetFrameRate()) + " " + ofToString(maxAmp) + " at " + ofToString(maxIndex) + " bin size=" + ofToString(count) , 10, viewPort.height - 10);
+
+	delete[] buffer;
 }
 
 //--------------------------------------------------------------
 void testApp::plotSpectrum() {
 
+	soundMutex.lock();
+	vector<vector<float>> buffer(spectrum.size());
+	for (int i = 0; i < spectrum.size(); i++)
+	{
+		vector<float> newLine(spectrum[i]);
+		buffer[i] = newLine;
+	}
+	soundMutex.unlock();
+
 	ofSetLineWidth(2);
 	double maxHeight = log(MAX_FBAND) / log(2);
 
-	for (int i = 0; i < spectrum.size(); ++i)
+	for (int i = 0; i < buffer.size(); ++i)
 	{
-		vector<float> line = spectrum[spectrum.size() - i - 1];
+		vector<float> line = buffer[buffer.size() - i - 1];
 
 		float maxVal = 0;
-		double maxIndex = 0;
+		int yFrom = 0, yTo = 0;
 		float prevHeight = 0;
-		int drawPosition = 0;
 		for (int j = 0; j < line.size(); ++j)
 		{
-			float heightValue = (log(j)/ log(2)) / maxHeight * viewPort.height;
-			int delta = min(1, (int)abs(prevHeight - heightValue));
-			prevHeight = heightValue;
-			drawPosition += delta * 2;
-			int y = drawPosition;
+			float y = log(j)/ log(2) / maxHeight * viewPort.height / 2;
 			
 			if(maxVal < line[j])
 			{
 				maxVal = line[j];
-				maxIndex = y;
+				yFrom = y;
+				yTo = prevHeight;
 			}
 
 			int color = 255-line[j] * 255;
 			ofSetColor(color, color, color);
 			
-			ofLine(i, y, i+2, y+2);
+			ofLine(i, y, i, prevHeight);
+
+			prevHeight = y;
 		}
 
 		ofSetColor(240, 84, 84);
-		ofLine(i, maxIndex, i+2, maxIndex+2);
-
-		ofSetColor(184, 184, 184);
-		ofLine(i, viewPort.height, i, viewPort.height - maxIndex);
+		ofLine(i, yFrom, i, yTo);
 	}
-
 }
 
 //--------------------------------------------------------------
@@ -260,9 +250,10 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 	memcpy(audioInput, left.data(), sizeof(float) * bufferSize);
 
 	fft->setSignal(audioInput);
-	memcpy(fftOutput, fft->getAmplitude(), sizeof(float) * fft->getBinSize());
+	float* buffer = new float[fft->getBinSize()];
+	memcpy(buffer, fft->getAmplitude(), sizeof(float) * fft->getBinSize());
 
-	vector<float> line(fftOutput, fftOutput + MAX_FBAND);
+	vector<float> line(buffer, buffer + MAX_FBAND);
 
 	float maxVal;
 	for (int i=0; i<line.size(); ++i)
@@ -275,10 +266,12 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 		line[i] /= maxVal;
 	}
 
+	soundMutex.lock();
+	memcpy(fftOutput, buffer, sizeof(float) * fft->getBinSize());
 	spectrum.push_back(line);
+	soundMutex.unlock();
 
-	fft->clampSignal();
-	memcpy(ifftOutput, fft->getSignal(), sizeof(float) * fft->getSignalSize());
+	delete[] buffer;
 }
 
 //--------------------------------------------------------------
@@ -338,4 +331,11 @@ void testApp::gotMessage(ofMessage msg){
 //--------------------------------------------------------------
 void testApp::dragEvent(ofDragInfo dragInfo){
 
+}
+
+//--------------------------------------------------------------
+testApp::~testApp(){
+	delete[] fftOutput;
+	delete[] audioInput;
+	delete fft;
 }
