@@ -197,7 +197,11 @@ void testApp::plotFft() {
 void testApp::plotSpectrum() {
 
 	soundMutex.lock();
+<<<<<<< HEAD
 	vector<vector<float> > buffer(spectrum.size());
+=======
+	vector < vector < float > > buffer(spectrum.size());
+>>>>>>> Invert spectrum
 	for (int i = 0; i < spectrum.size(); i++)
 	{
 		vector<float> newLine(spectrum[i]);
@@ -206,7 +210,8 @@ void testApp::plotSpectrum() {
 	soundMutex.unlock();
 
 	ofSetLineWidth(2);
-	double maxHeight = log(MAX_FBAND) / log(2);
+	double maxLog = log(MAX_FBAND) / log(2);
+	int maxHeight = viewPort.height / 2;
 
 	for (int i = 0; i < buffer.size(); ++i)
 	{
@@ -214,28 +219,36 @@ void testApp::plotSpectrum() {
 
 		float maxVal = 0;
 		int yFrom = 0, yTo = 0;
-		float prevHeight = 0;
+		float maxFreq = 0;
+		int prevHeight = 0;
 		for (int j = 0; j < line.size(); ++j)
 		{
-			float y = log(j)/ log(2) / maxHeight * viewPort.height / 2;
+			float logFreq = log(j)/ log(2);
+			int y = logFreq / maxLog * maxHeight;
 			
-			if(maxVal < line[j])
+			if(1 == line[j])
 			{
 				maxVal = line[j];
-				yFrom = y;
-				yTo = prevHeight;
+				yFrom = max(0, y);
+				if (yFrom != 0) {
+					yTo = prevHeight;
+				}
+				maxFreq = logFreq;
 			}
 
 			int color = 255-line[j] * 255;
 			ofSetColor(color, color, color);
-			
-			ofLine(i, y, i, prevHeight);
+			ofLine(i, maxHeight - y, i, maxHeight - prevHeight);
 
 			prevHeight = y;
 		}
 
 		ofSetColor(240, 84, 84);
-		ofLine(i, yFrom, i, yTo);
+		ofLine(i, maxHeight - yFrom, i, maxHeight - yTo);
+
+		ofSetColor(184, 184, 184);
+		ofLine(i, viewPort.height, i, viewPort.height - maxFreq / maxLog * maxHeight);
+
 	}
 }
 
