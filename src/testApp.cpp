@@ -148,9 +148,10 @@ void testApp::moveSegments(int count) {
 
 //--------------------------------------------------------------
 void testApp::draw(){
-	drawScene();
+	//drawScene();
 
-	plotFft();
+	//plotFft();
+	plotSpectrum();
 }
 
 //--------------------------------------------------------------
@@ -206,6 +207,49 @@ void testApp::plotFft() {
 }
 
 //--------------------------------------------------------------
+void testApp::plotSpectrum() {
+
+	ofSetLineWidth(2);
+	double maxHeight = log(MAX_FBAND) / log(2);
+
+	for (int i = 0; i < spectrum.size(); ++i)
+	{
+		vector<float> line = spectrum[spectrum.size() - i - 1];
+
+		float maxVal = 0;
+		double maxIndex = 0;
+		float prevHeight = 0;
+		int drawPosition = 0;
+		for (int j = 0; j < line.size(); ++j)
+		{
+			float heightValue = (log(j)/ log(2)) / maxHeight * viewPort.height;
+			int delta = min(1, (int)abs(prevHeight - heightValue));
+			prevHeight = heightValue;
+			drawPosition += delta * 2;
+			int y = drawPosition;
+			
+			if(maxVal < line[j])
+			{
+				maxVal = line[j];
+				maxIndex = y;
+			}
+
+			int color = 255-line[j] * 255;
+			ofSetColor(color, color, color);
+			
+			ofLine(i, y, i+2, y+2);
+		}
+
+		ofSetColor(240, 84, 84);
+		ofLine(i, maxIndex, i+2, maxIndex+2);
+
+		ofSetColor(184, 184, 184);
+		ofLine(i, viewPort.height, i, viewPort.height - maxIndex);
+	}
+
+}
+
+//--------------------------------------------------------------
 void testApp::audioIn(float * input, int bufferSize, int nChannels){	
 
 	for (int i = 0; i < bufferSize; i++){
@@ -217,6 +261,21 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 
 	fft->setSignal(audioInput);
 	memcpy(fftOutput, fft->getAmplitude(), sizeof(float) * fft->getBinSize());
+
+	vector<float> line(fftOutput, fftOutput + MAX_FBAND);
+
+	float maxVal;
+	for (int i=0; i<line.size(); ++i)
+	{
+		maxVal = max(maxVal, line[i]);
+	}
+
+	for (int i=0; i<line.size(); ++i)
+	{
+		line[i] /= maxVal;
+	}
+
+	spectrum.push_back(line);
 
 	fft->clampSignal();
 	memcpy(ifftOutput, fft->getSignal(), sizeof(float) * fft->getSignalSize());

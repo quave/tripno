@@ -39,6 +39,7 @@ private:
 
 		vector <float> left;
 		vector <float> right;
+		vector<vector<float>> spectrum;
 
 		ofxFft* fft;
 		float* audioInput;
@@ -53,4 +54,5 @@ private:
 		void moveSegments(int index);
 		void drawScene();
 		void plotFft();
+		void plotSpectrum();
 };
