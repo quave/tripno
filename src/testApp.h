@@ -41,7 +41,7 @@ private:
 
 		vector <float> left;
 		vector <float> right;
-		vector<vector<float>> spectrum;
+		vector<vector<float> > spectrum;
 
 		ofxFft* fft;
 		float* audioInput;

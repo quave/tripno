@@ -197,7 +197,7 @@ void testApp::plotFft() {
 void testApp::plotSpectrum() {
 
 	soundMutex.lock();
-	vector<vector<float>> buffer(spectrum.size());
+	vector<vector<float> > buffer(spectrum.size());
 	for (int i = 0; i < spectrum.size(); i++)
 	{
 		vector<float> newLine(spectrum[i]);
