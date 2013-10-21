@@ -21,3 +21,5 @@ bin/
 obj/
 *.*~
 *.xcuserstate
+
+tripno.xcodeproj/project.xcworkspace/xcuserdata/user.xcuserdatad/UserInterfaceState.xcuserstate
