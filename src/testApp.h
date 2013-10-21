@@ -41,11 +41,7 @@ private:
 
 		vector <float> left;
 		vector <float> right;
-<<<<<<< HEAD
-		vector<vector<float> > spectrum;
-=======
 		vector < vector < float > > spectrum;
->>>>>>> Invert spectrum
 
 		ofxFft* fft;
 		float* audioInput;

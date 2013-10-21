@@ -197,11 +197,7 @@ void testApp::plotFft() {
 void testApp::plotSpectrum() {
 
 	soundMutex.lock();
-<<<<<<< HEAD
-	vector<vector<float> > buffer(spectrum.size());
-=======
 	vector < vector < float > > buffer(spectrum.size());
->>>>>>> Invert spectrum
 	for (int i = 0; i < spectrum.size(); i++)
 	{
 		vector<float> newLine(spectrum[i]);
