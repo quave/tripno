@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxFft.h"
+#include "dywapitchtrack.h"
 
 #define SEGMENTS_PER_VIEWPORT 20
 #define SEGMENTS_STORED SEGMENTS_PER_VIEWPORT + 1
@@ -42,6 +43,7 @@ private:
 		vector <float> left;
 		vector <float> right;
 		vector < vector < float > > spectrum;
+		vector <float> pitches;
 
 		ofxFft* fft;
 		float* audioInput;

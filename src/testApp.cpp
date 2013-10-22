@@ -102,6 +102,7 @@ void testApp::update(){
 
 	moveSegments(floor(beginOffset) - currentIndex);
 	currentIndex = floor(beginOffset);
+
 }
 
 //--------------------------------------------------------------
@@ -243,7 +244,8 @@ void testApp::plotSpectrum() {
 		ofLine(i, maxHeight - yFrom, i, maxHeight - yTo);
 
 		ofSetColor(184, 184, 184);
-		ofLine(i, viewPort.height, i, viewPort.height - maxFreq / maxLog * maxHeight);
+		//ofLine(i, viewPort.height, i, viewPort.height - maxFreq / maxLog * maxHeight);
+		ofLine(i, viewPort.height, i, viewPort.height - pitches[pitches.size() - i - 1]);
 
 	}
 }
@@ -256,7 +258,20 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 		right[i]	= input[i*2+1];
 	}
 
+	double* samples = new double[AUDIO_BUFFER_SIZE];
+	soundMutex.lock();
 	memcpy(audioInput, left.data(), sizeof(float) * bufferSize);
+
+	for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
+	{
+		samples[i] = audioInput[i];
+	}
+	soundMutex.unlock();
+
+	dywapitchtracker pitchtracker;
+	dywapitch_inittracking(&pitchtracker);
+	double freq = dywapitch_computepitch(&pitchtracker, samples, 0, AUDIO_BUFFER_SIZE);
+	pitches.push_back(freq);
 
 	fft->setSignal(audioInput);
 	float* buffer = new float[fft->getBinSize()];

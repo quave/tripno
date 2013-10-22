@@ -22,6 +22,9 @@
     <ClCompile Include="..\..\..\addons\ofxFft\libs\kiss\kiss_fftr.c">
       <Filter>addons\ofxFft\libs\kiss</Filter>
     </ClCompile>
+    <ClCompile Include="src\dywapitchtrack.c">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -64,6 +67,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxFft\libs\kiss\_kiss_fft_guts.h">
       <Filter>addons\ofxFft\libs\kiss</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dywapitchtrack.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
