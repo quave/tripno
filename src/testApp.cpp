@@ -31,11 +31,7 @@ void testApp::setup(){
 
 	fft = ofxFft::create(AUDIO_BUFFER_SIZE, OF_FFT_WINDOW_RECTANGULAR);
 
-	left.assign(AUDIO_BUFFER_SIZE, 0.0);
-	right.assign(AUDIO_BUFFER_SIZE, 0.0);
-	
-	soundStream.setup(this, 0, 2, 44100, AUDIO_BUFFER_SIZE, 4);
-	audioInput = new float[AUDIO_BUFFER_SIZE];
+	soundStream.setup(this, 0, 2, SAMPLE_RATE, AUDIO_BUFFER_SIZE, 4);
 	fftOutput = new float[fft->getBinSize()];
 
 	// seed random
@@ -245,57 +241,114 @@ void testApp::plotSpectrum() {
 
 		ofSetColor(184, 184, 184);
 		//ofLine(i, viewPort.height, i, viewPort.height - maxFreq / maxLog * maxHeight);
-		ofLine(i, viewPort.height, i, viewPort.height - pitches[pitches.size() - i - 1]);
+	}
 
+	for (int i = 0; i < pitches.size(); i++)
+	{
+		ofSetColor(184, 184, 184);
+		ofLine(i, viewPort.height - 150, i, viewPort.height - 150 - control[control.size() - i - 1] * 20);
+		ofLine(i, viewPort.height, i, viewPort.height- pitches[pitches.size() - i - 1] * 20);
 	}
 }
 
+double minFreqLog = 100, maxFreqLog = 0;
 //--------------------------------------------------------------
 void testApp::audioIn(float * input, int bufferSize, int nChannels){	
+
+	float* left = new float[bufferSize];
+	float* right = new float[bufferSize];
 
 	for (int i = 0; i < bufferSize; i++){
 		left[i]		= input[i*2];
 		right[i]	= input[i*2+1];
 	}
 
-	double* samples = new double[AUDIO_BUFFER_SIZE];
-	soundMutex.lock();
-	memcpy(audioInput, left.data(), sizeof(float) * bufferSize);
-
+	// Find average value of the signal
+	double avgSample = 0;
 	for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
 	{
-		samples[i] = audioInput[i];
+		avgSample += abs(left[i]);
 	}
-	soundMutex.unlock();
+	avgSample /= AUDIO_BUFFER_SIZE;
 
+	// Gate signal with half of average value
+	for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
+	{
+		if (abs(left[i]) > avgSample * 0.5) {
+			continue;
+		}
+		
+		left[i] = 0;
+	}
+
+	//Get fft
+	fft->setSignal(left);
+	size_t count = fft->getBinSize();
+	float* amplitudes = fft->getAmplitude();
+
+	// Find average aplitude and clamp signal range
+	const size_t minIndex = MIN_VOICE_FREQ * AUDIO_BUFFER_SIZE / SAMPLE_RATE;
+	const size_t maxIndex = MAX_VOICE_FREQ * AUDIO_BUFFER_SIZE / SAMPLE_RATE;
+	float averageAmp = 0;
+	for (size_t i = 0; i < count; i++)
+	{
+		if (i < minIndex || i >= maxIndex)
+		{
+			amplitudes[i] = 0;
+		}
+
+		averageAmp += amplitudes[i];
+	}
+	averageAmp /= maxIndex - minIndex;
+
+	// Gate amplitudes with average amp. And pow 2 the rest.
+	for (size_t i = minIndex; i <= maxIndex; i++)
+	{
+		amplitudes[i] = amplitudes[i] > averageAmp 
+			? amplitudes[i] * amplitudes[i]
+			: 0;
+	}
+
+	// Get filtered signal with inverse fft.
+	float* filteredSignal = new float[AUDIO_BUFFER_SIZE];
+	memcpy(filteredSignal, fft->getSignal(), sizeof(float) * AUDIO_BUFFER_SIZE);
+
+	// Convert signal to double array.
+	double* samples = new double[AUDIO_BUFFER_SIZE];
+	for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
+	{
+		samples[i] = left[i];
+	}
+
+	// Get pitch
 	dywapitchtracker pitchtracker;
 	dywapitch_inittracking(&pitchtracker);
-	double freq = dywapitch_computepitch(&pitchtracker, samples, 0, AUDIO_BUFFER_SIZE);
-	pitches.push_back(freq);
+	double freq =  max(0.0, dywapitch_computepitch(&pitchtracker, samples, 0, AUDIO_BUFFER_SIZE));
 
-	fft->setSignal(audioInput);
-	float* buffer = new float[fft->getBinSize()];
-	memcpy(buffer, fft->getAmplitude(), sizeof(float) * fft->getBinSize());
+	// Get rid off the array
+	delete[] filteredSignal;
 
-	vector<float> line(buffer, buffer + MAX_FBAND);
+	double freqLog = 0;
+	double delta = 0;
 
-	float maxVal;
-	for (int i=0; i<line.size(); ++i)
+	// Calculate delata (control signal)
+	if (freq > 0)
 	{
-		maxVal = max(maxVal, line[i]);
+		freqLog = log(freq);
+
+		minFreqLog = min(minFreqLog, freqLog);
+		maxFreqLog = max(maxFreqLog, freqLog);
+
+		double centralFreqLog = (minFreqLog + maxFreqLog) /2;
+		
+		delta = freqLog - centralFreqLog;
 	}
 
-	for (int i=0; i<line.size(); ++i)
-	{
-		line[i] /= maxVal;
-	}
-
+	// Append data
 	soundMutex.lock();
-	memcpy(fftOutput, buffer, sizeof(float) * fft->getBinSize());
-	spectrum.push_back(line);
+	control.push_back(delta);
+	pitches.push_back(freqLog);
 	soundMutex.unlock();
-
-	delete[] buffer;
 }
 
 //--------------------------------------------------------------
@@ -360,6 +413,5 @@ void testApp::dragEvent(ofDragInfo dragInfo){
 //--------------------------------------------------------------
 testApp::~testApp(){
 	delete[] fftOutput;
-	delete[] audioInput;
 	delete fft;
 }
