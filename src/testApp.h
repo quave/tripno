@@ -42,6 +42,8 @@ private:
 		ofRectangle paddingTop, paddingBottom;
 		ofRectangle gameField, viewPort;
 		int currentIndex;
+		double minFreqLog;
+		double maxFreqLog;
 
 		vector < vector < float > > spectrum;
 		vector <float> pitches;
@@ -61,4 +63,5 @@ private:
 		void drawScene();
 		void plotFft();
 		void plotSpectrum();
+		float smoothSignal(float rawVal, vector<float> signal);
 };

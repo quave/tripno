@@ -11,6 +11,9 @@ void testApp::setup(){
 	timeElapsed = 0;
 	currentIndex = 1;
 
+	minFreqLog = 100;
+	maxFreqLog = 0;
+
     for (int i = 0; i < SEGMENTS_STORED; ++i) {
         ceilHeights[i] = floorHeights[i] = 0;
 		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
@@ -243,15 +246,22 @@ void testApp::plotSpectrum() {
 		//ofLine(i, viewPort.height, i, viewPort.height - maxFreq / maxLog * maxHeight);
 	}
 
+	const int controlBaseLine = viewPort.height - viewPort.height / 2;
+	const int signalMultiplier = 40;
 	for (int i = 0; i < pitches.size(); i++)
 	{
 		ofSetColor(184, 184, 184);
-		ofLine(i, viewPort.height - 150, i, viewPort.height - 150 - control[control.size() - i - 1] * 20);
-		ofLine(i, viewPort.height, i, viewPort.height- pitches[pitches.size() - i - 1] * 20);
+		ofLine(i, controlBaseLine, i, controlBaseLine - control[control.size() - i - 1] * signalMultiplier);
+		ofLine(i, viewPort.height, i, viewPort.height- pitches[pitches.size() - i - 1] * signalMultiplier);
 	}
+
+	ofSetColor(184, 84, 84);
+	int minFreqY = viewPort.height - minFreqLog * signalMultiplier;
+	int maxFreqY = viewPort.height - maxFreqLog * signalMultiplier;
+	ofLine(0, minFreqY, viewPort.width, minFreqY);
+	ofLine(0, maxFreqY, viewPort.width, maxFreqY);
 }
 
-double minFreqLog = 100, maxFreqLog = 0;
 //--------------------------------------------------------------
 void testApp::audioIn(float * input, int bufferSize, int nChannels){	
 
@@ -332,16 +342,30 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 	double delta = 0;
 
 	// Calculate delata (control signal)
+	const double borderClampSpeed = 0.001;
 	if (freq > 0)
 	{
 		freqLog = log(freq);
 
-		minFreqLog = min(minFreqLog, freqLog);
-		maxFreqLog = max(maxFreqLog, freqLog);
+		if (freqLog < minFreqLog) {
+			minFreqLog = freqLog;
+		}
+		else {
+			minFreqLog *= 1.0 + borderClampSpeed;
+		}
+
+		if (freqLog > maxFreqLog) {
+			maxFreqLog = freqLog;
+		}
+		else {
+			maxFreqLog *= 1.0 - borderClampSpeed;
+		}
 
 		double centralFreqLog = (minFreqLog + maxFreqLog) /2;
 		
 		delta = freqLog - centralFreqLog;
+
+		delta = smoothSignal(delta, control);
 	}
 
 	// Append data
@@ -349,6 +373,17 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 	control.push_back(delta);
 	pitches.push_back(freqLog);
 	soundMutex.unlock();
+}
+
+//--------------------------------------------------------------
+float testApp::smoothSignal(float rawVal, vector<float> signal) {
+	size_t count = signal.size();
+
+	if (!count) {
+		return rawVal;
+	}
+
+	return (signal[count - 1] + rawVal) / 2.0f;
 }
 
 //--------------------------------------------------------------
