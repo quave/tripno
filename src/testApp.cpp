@@ -3,6 +3,12 @@
 //--------------------------------------------------------------
 void testApp::setup(){
 	
+	tripno.mass = 1.0;
+	tripno.velocity = 0;
+	tripno.forceElastic = 0;
+	tripno.forceResistance = 0;
+	tripno.position = ofPoint(0, 0);
+
 	// init logs
 	ofSetLogLevel(OF_LOG_VERBOSE);
 	ofLogVerbose() << "setup started";
@@ -46,10 +52,16 @@ void testApp::setup(){
 //--------------------------------------------------------------
 void testApp::update(){
     unsigned long long now = ofGetElapsedTimeMillis();
-	float dt = (now - timeElapsed) / 1000.0f;
+	float dt = (now - timeElapsed)/1000.0f;
 	timeElapsed = now;
-
+	
 	// update scene
+	updateBackground();
+	updateTripno(dt);
+}
+
+//--------------------------------------------------------------
+void testApp::updateBackground() {
 
 	//offset in segments
 	float beginOffset = MOVEMENT_SPEED * timeElapsed / 1000.0f;
@@ -101,7 +113,32 @@ void testApp::update(){
 
 	moveSegments(floor(beginOffset) - currentIndex);
 	currentIndex = floor(beginOffset);
+}
 
+//--------------------------------------------------------------
+void testApp::updateTripno(float dt) {
+
+	const int signalAmp = 10000;
+
+	float signal = 0;
+
+	// pop max signal from the control data
+	if (control.size()) {
+		soundMutex.lock();
+		signal = (*max_element(begin(control), end(control))) * signalAmp;
+		control.clear();
+		soundMutex.unlock();
+	}
+
+	double acceleration = (signal/* as control force */ + tripno.forceElastic + tripno.forceResistance) * tripno.mass;
+	
+	tripno.position.y +=  tripno.velocity * dt + acceleration * dt * dt;
+
+	tripno.velocity += acceleration * dt;
+
+	tripno.forceElastic = - ELASTIC_KOEFF * tripno.position.y;
+
+	tripno.forceResistance = - tripno.velocity * RESISTANCE_KOEFF;
 }
 
 //--------------------------------------------------------------
@@ -128,10 +165,10 @@ void testApp::moveSegments(int count) {
 
 //--------------------------------------------------------------
 void testApp::draw(){
-	//drawScene();
+	drawScene();
 
 	//plotFft();
-	plotSpectrum();
+	//plotSpectrum();
 }
 
 //--------------------------------------------------------------
@@ -151,7 +188,7 @@ void testApp::drawScene() {
 
 	ofSetColor(255, 85, 84);
     ofFill();
-	ofCircle(viewPort.width * 0.3, viewPort.height * 0.5, viewPort.width * 0.03);
+	ofCircle(viewPort.width * 0.3, viewPort.height * 0.5 - tripno.position.y, viewPort.width * 0.03);
 }
 
 //--------------------------------------------------------------

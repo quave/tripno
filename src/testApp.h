@@ -14,6 +14,17 @@
 #define MAX_FBAND 200
 #define MIN_VOICE_FREQ 40
 #define MAX_VOICE_FREQ 3000
+#define ELASTIC_KOEFF 0.5
+#define RESISTANCE_KOEFF 0.2
+
+struct movableObject {
+	double mass;
+
+	ofPoint position;
+	double velocity;
+	double forceElastic;
+	double forceResistance;
+};
 
 class testApp : public ofBaseApp{
 
@@ -37,6 +48,8 @@ class testApp : public ofBaseApp{
 		~testApp();
 	
 private:
+		movableObject tripno;
+
 		int ceilHeights[SEGMENTS_STORED], floorHeights[SEGMENTS_STORED];
 		ofRectangle skyline[SEGMENTS_STORED], earthline[SEGMENTS_STORED];
 		ofRectangle paddingTop, paddingBottom;
@@ -60,6 +73,8 @@ private:
 		ofMutex soundMutex;
 
 		void moveSegments(int index);
+		void updateBackground();
+		void updateTripno(float dt);
 		void drawScene();
 		void plotFft();
 		void plotSpectrum();
