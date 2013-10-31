@@ -14,8 +14,9 @@
 #define MAX_FBAND 200
 #define MIN_VOICE_FREQ 40
 #define MAX_VOICE_FREQ 3000
-#define ELASTIC_KOEFF 0.5
-#define RESISTANCE_KOEFF 0.2
+#define SIGNAL_AMP 10000.0
+#define ELASTIC_KOEFF 0.8
+#define RESISTANCE_KOEFF 0.5
 
 struct movableObject {
 	double mass;

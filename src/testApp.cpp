@@ -118,14 +118,12 @@ void testApp::updateBackground() {
 //--------------------------------------------------------------
 void testApp::updateTripno(float dt) {
 
-	const int signalAmp = 10000;
-
 	float signal = 0;
 
 	// pop max signal from the control data
 	if (control.size()) {
 		soundMutex.lock();
-		signal = (*max_element(begin(control), end(control))) * signalAmp;
+		signal = (*max_element(begin(control), end(control))) * SIGNAL_AMP;
 		control.clear();
 		soundMutex.unlock();
 	}
