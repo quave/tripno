@@ -15,7 +15,7 @@
 #define MIN_VOICE_FREQ 40
 #define MAX_VOICE_FREQ 3000
 #define SIGNAL_AMP 10000.0
-#define ELASTIC_KOEFF 0.8
+#define ELASTIC_KOEFF 2
 #define RESISTANCE_KOEFF 0.5
 
 struct movableObject {
@@ -23,8 +23,6 @@ struct movableObject {
 
 	ofPoint position;
 	double velocity;
-	double forceElastic;
-	double forceResistance;
 };
 
 class testApp : public ofBaseApp{

@@ -5,8 +5,6 @@ void testApp::setup(){
 	
 	tripno.mass = 1.0;
 	tripno.velocity = 0;
-	tripno.forceElastic = 0;
-	tripno.forceResistance = 0;
 	tripno.position = ofPoint(0, 0);
 
 	// init logs
@@ -123,20 +121,20 @@ void testApp::updateTripno(float dt) {
 	// pop max signal from the control data
 	if (control.size()) {
 		soundMutex.lock();
-		signal = (*max_element(begin(control), end(control))) * SIGNAL_AMP;
+		signal = (*max_element(control.begin(), control.end())) * SIGNAL_AMP;
 		control.clear();
 		soundMutex.unlock();
 	}
 
-	double acceleration = (signal/* as control force */ + tripno.forceElastic + tripno.forceResistance) * tripno.mass;
+	double forceElastic = - ELASTIC_KOEFF * tripno.position.y;
+
+	double forceResistance = - tripno.velocity * RESISTANCE_KOEFF;
+
+	double acceleration = (signal/* as control force */ + forceElastic + forceResistance) * tripno.mass;
 	
 	tripno.position.y +=  tripno.velocity * dt + acceleration * dt * dt;
 
 	tripno.velocity += acceleration * dt;
-
-	tripno.forceElastic = - ELASTIC_KOEFF * tripno.position.y;
-
-	tripno.forceResistance = - tripno.velocity * RESISTANCE_KOEFF;
 }
 
 //--------------------------------------------------------------
