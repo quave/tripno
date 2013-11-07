@@ -53,22 +53,22 @@ void testApp::setup(){
 //--------------------------------------------------------------
 
 void testApp::readConfig() {
-	ofXml config;
-	try {
-		config.load(ofToDataPath("config.xml"));
 
+	ofXml config;
+
+	if (config.load(ofToDataPath("config.xml"))) {
 		signalAmp = ofToDouble(config.getValue("signalAmp"));
 		elasticKoeff = ofToDouble(config.getValue("elasticKoeff"));
 		resistanceKoeff = ofToDouble(config.getValue("resistanceKoeff"));
-
-		ofLogNotice() << "Update config";
-		ofLogNotice() << "signalAmp=" << signalAmp;
-		ofLogNotice() << "elasticKoeff=" << elasticKoeff;
-		ofLogNotice() << "resistanceKoeff=" << resistanceKoeff;
 	}
-	catch (...) {
+	else {
 		signalAmp = elasticKoeff = resistanceKoeff = 0;
 	}
+
+	ofLogNotice() << "Update config";
+	ofLogNotice() << "signalAmp=" << signalAmp;
+	ofLogNotice() << "elasticKoeff=" << elasticKoeff;
+	ofLogNotice() << "resistanceKoeff=" << resistanceKoeff;
 }
 
 //--------------------------------------------------------------
@@ -431,6 +431,9 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 	control.push_back(delta);
 	pitches.push_back(freqLog);
 	soundMutex.unlock();
+
+	delete[] left;
+	delete[] right;
 }
 
 //--------------------------------------------------------------
