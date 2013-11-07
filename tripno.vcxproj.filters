@@ -45,6 +45,9 @@
     <Filter Include="addons\ofxFft\libs\kiss">
       <UniqueIdentifier>{f5a13ac8-b6ac-42ea-97e0-61e88b3132f7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="data">
+      <UniqueIdentifier>{56319358-0fed-47ad-b3ae-b827992b3e29}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\testApp.h">
@@ -74,5 +77,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="icon.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="data\config.xml">
+      <Filter>data</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

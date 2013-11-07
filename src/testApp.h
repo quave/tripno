@@ -14,9 +14,6 @@
 #define MAX_FBAND 200
 #define MIN_VOICE_FREQ 40
 #define MAX_VOICE_FREQ 3000
-#define SIGNAL_AMP 10000.0
-#define ELASTIC_KOEFF 2
-#define RESISTANCE_KOEFF 0.5
 
 struct movableObject {
 	double mass;
@@ -57,6 +54,10 @@ private:
 		double minFreqLog;
 		double maxFreqLog;
 
+		double signalAmp;
+		double elasticKoeff;
+		double resistanceKoeff;
+
 		vector < vector < float > > spectrum;
 		vector <float> pitches;
 		vector <float> control;
@@ -78,4 +79,6 @@ private:
 		void plotFft();
 		void plotSpectrum();
 		float smoothSignal(float rawVal, vector<float> signal);
+
+		void readConfig();
 };

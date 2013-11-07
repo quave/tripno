@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<signalAmp>10000.0</signalAmp>
+	<elasticKoeff>2.0</elasticKoeff>
+	<resistanceKoeff>0.005</resistanceKoeff>
+</config>

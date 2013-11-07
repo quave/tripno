@@ -2,14 +2,13 @@
 
 //--------------------------------------------------------------
 void testApp::setup(){
+	// init logs
+	ofSetLogLevel(OF_LOG_VERBOSE);
+	ofLogVerbose() << "setup started";
 	
 	tripno.mass = 1.0;
 	tripno.velocity = 0;
 	tripno.position = ofPoint(0, 0);
-
-	// init logs
-	ofSetLogLevel(OF_LOG_VERBOSE);
-	ofLogVerbose() << "setup started";
 
 	// init scene objects
 	timeElapsed = 0;
@@ -22,6 +21,7 @@ void testApp::setup(){
         ceilHeights[i] = floorHeights[i] = 0;
 		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
     }
+
 
 	gameField = paddingTop = paddingBottom = 
 		ofRectangle(0,0,0,0);
@@ -44,7 +44,31 @@ void testApp::setup(){
 	// seed random
 	ofSeedRandom();
 
+	//update config
+	readConfig();
+
 	ofLogVerbose() << "setup finished";
+}
+
+//--------------------------------------------------------------
+
+void testApp::readConfig() {
+	ofXml config;
+	try {
+		config.load(ofToDataPath("config.xml"));
+
+		signalAmp = ofToDouble(config.getValue("signalAmp"));
+		elasticKoeff = ofToDouble(config.getValue("elasticKoeff"));
+		resistanceKoeff = ofToDouble(config.getValue("resistanceKoeff"));
+
+		ofLogNotice() << "Update config";
+		ofLogNotice() << "signalAmp=" << signalAmp;
+		ofLogNotice() << "elasticKoeff=" << elasticKoeff;
+		ofLogNotice() << "resistanceKoeff=" << resistanceKoeff;
+	}
+	catch (...) {
+		signalAmp = elasticKoeff = resistanceKoeff = 0;
+	}
 }
 
 //--------------------------------------------------------------
@@ -121,14 +145,15 @@ void testApp::updateTripno(float dt) {
 	// pop max signal from the control data
 	if (control.size()) {
 		soundMutex.lock();
-		signal = (*max_element(control.begin(), control.end())) * SIGNAL_AMP;
+		signal = (*max_element(control.begin(), control.end())) * signalAmp;
 		control.clear();
 		soundMutex.unlock();
 	}
+	signal = signal != signal ? 0 : signal;
 
-	double forceElastic = - ELASTIC_KOEFF * tripno.position.y;
+	double forceElastic = - elasticKoeff * tripno.position.y;
 
-	double forceResistance = - tripno.velocity * RESISTANCE_KOEFF;
+	double forceResistance = - tripno.velocity * tripno.velocity * resistanceKoeff;
 
 	double acceleration = (signal/* as control force */ + forceElastic + forceResistance) * tripno.mass;
 	
@@ -427,6 +452,10 @@ void testApp::keyPressed  (int key){
 	
 	if( key == 'e' ){
 		soundStream.stop();
+	}
+
+	if( key == 'r' ){
+		readConfig();
 	}
 }
 

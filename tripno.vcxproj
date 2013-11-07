@@ -122,5 +122,10 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/D_DEBUG %(AdditionalOptions)</AdditionalOptions>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="data\config.xml">
+      <DeploymentContent>true</DeploymentContent>
+    </Xml>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
