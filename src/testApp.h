@@ -26,6 +26,15 @@ struct movableObject {
 	double dbgResistance;
 };
 
+struct t_config {
+	double signalAmp;
+	double elasticKoeff;
+	double resistanceKoeff;
+
+	double gateThreshold;
+	double maxSignalClampRate;
+};
+
 class testApp : public ofBaseApp{
 
 	public:
@@ -57,10 +66,7 @@ private:
 		int currentIndex;
 		double minFreqLog;
 		double maxFreqLog;
-
-		double signalAmp;
-		double elasticKoeff;
-		double resistanceKoeff;
+		double maxSignal;
 
 		vector < vector < float > > spectrum;
 		vector <float> pitches;
@@ -72,7 +78,7 @@ private:
 		unsigned long long timeElapsed;
 
 		ofSoundStream soundStream;
-		
+		t_config config;
 
 		ofMutex soundMutex;
 

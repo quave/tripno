@@ -16,6 +16,7 @@ void testApp::setup(){
 
 	minFreqLog = 100;
 	maxFreqLog = 0;
+	maxSignal = 0;
 
     for (int i = 0; i < SEGMENTS_STORED; ++i) {
         ceilHeights[i] = floorHeights[i] = 0;
@@ -54,21 +55,24 @@ void testApp::setup(){
 
 void testApp::readConfig() {
 
-	ofXml config;
+	ofXml xmlConfig;
 
-	if (config.load(ofToDataPath("config.xml"))) {
-		signalAmp = ofToDouble(config.getValue("signalAmp"));
-		elasticKoeff = ofToDouble(config.getValue("elasticKoeff"));
-		resistanceKoeff = ofToDouble(config.getValue("resistanceKoeff"));
+	if (xmlConfig.load(ofToDataPath("config.xml"))) {
+		config.signalAmp = ofToDouble(xmlConfig.getValue("signalAmp"));
+		config.elasticKoeff = ofToDouble(xmlConfig.getValue("elasticKoeff"));
+		config.resistanceKoeff = ofToDouble(xmlConfig.getValue("resistanceKoeff"));
+		config.gateThreshold = ofToDouble(xmlConfig.getValue("gateThreshold"));
+		config.maxSignalClampRate = ofToDouble(xmlConfig.getValue("maxSignalClampRate"));
 	}
 	else {
-		signalAmp = elasticKoeff = resistanceKoeff = 0;
+		config.signalAmp = config.elasticKoeff = 
+			config.maxSignalClampRate = config.resistanceKoeff = 0;
 	}
 
 	ofLogNotice() << "Update config";
-	ofLogNotice() << "signalAmp=" << signalAmp;
-	ofLogNotice() << "elasticKoeff=" << elasticKoeff;
-	ofLogNotice() << "resistanceKoeff=" << resistanceKoeff;
+	ofLogNotice() << "signalAmp=" << config.signalAmp;
+	ofLogNotice() << "elasticKoeff=" << config.elasticKoeff;
+	ofLogNotice() << "resistanceKoeff=" << config.resistanceKoeff;
 }
 
 //--------------------------------------------------------------
@@ -147,16 +151,16 @@ void testApp::updateTripno(float dt) {
 	// pop max signal from the control data
 	if (control.size() - lastSignalIndex > 1) {
 		soundMutex.lock();
-		signal = (*max_element(control.begin() + lastSignalIndex, control.end())) * signalAmp;
+		signal = (*max_element(control.begin() + lastSignalIndex, control.end())) * config.signalAmp;
 		lastSignalIndex = control.size() - 1;
 		soundMutex.unlock();
 	}
 	signal = signal != signal ? 0 : signal;
 	tripno.dbgSignal = signal ? signal : tripno.dbgSignal;
 
-	tripno.dbgElastic = - elasticKoeff * tripno.position.y;
+	tripno.dbgElastic = - config.elasticKoeff * tripno.position.y;
 
-	tripno.dbgResistance = - ofSign(tripno.velocity) *  tripno.velocity * tripno.velocity * resistanceKoeff;
+	tripno.dbgResistance = - ofSign(tripno.velocity) *  tripno.velocity * tripno.velocity * config.resistanceKoeff;
 
 	double acceleration = (signal/* as control force */ + tripno.dbgElastic + tripno.dbgResistance) * tripno.mass;
 	
@@ -316,18 +320,21 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 		right[i]	= input[i*2+1];
 	}
 
-	// Find average value of the signal
-	double avgSample = 0;
+	// Find max signal for this sample
+	double maxSignalLocal = 0;
 	for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
 	{
-		avgSample += abs(left[i]);
+		maxSignalLocal = max(maxSignalLocal, (double)abs(left[i]));
 	}
-	avgSample /= AUDIO_BUFFER_SIZE;
+	// Update max signal or slightly reduce it
+	maxSignal = maxSignalLocal > maxSignal
+		? maxSignalLocal
+		: maxSignal * config.maxSignalClampRate;
 
-	// Gate signal with half of average value
+	// Gate signal with half of maxSignal value
 	for (int i = 0; i < AUDIO_BUFFER_SIZE; i++)
 	{
-		if (abs(left[i]) > avgSample * 0.5) {
+		if (abs(left[i]) > maxSignal * config.gateThreshold) {
 			continue;
 		}
 		
