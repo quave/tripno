@@ -44,7 +44,7 @@
     <TargetName>$(ProjectName)_debug</TargetName>
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
-    <IncludePath>C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\libs\fftw\include;C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\libs\kiss;C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\src;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\..\addons\ofxFft\libs\fftw\include;..\..\..\addons\ofxFft\libs\kiss;..\..\..\addons\ofxFft\src;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\vsynkov\Desktop\of_v0.8.0_vs_release\addons\ofxFft\libs\fftw\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

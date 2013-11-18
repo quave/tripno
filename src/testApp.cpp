@@ -138,24 +138,27 @@ void testApp::updateBackground() {
 }
 
 //--------------------------------------------------------------
+size_t lastSignalIndex = 0;
+
 void testApp::updateTripno(float dt) {
 
 	float signal = 0;
 
 	// pop max signal from the control data
-	if (control.size()) {
+	if (control.size() - lastSignalIndex > 1) {
 		soundMutex.lock();
-		signal = (*max_element(control.begin(), control.end())) * signalAmp;
-		control.clear();
+		signal = (*max_element(control.begin() + lastSignalIndex, control.end())) * signalAmp;
+		lastSignalIndex = control.size() - 1;
 		soundMutex.unlock();
 	}
 	signal = signal != signal ? 0 : signal;
+	tripno.dbgSignal = signal ? signal : tripno.dbgSignal;
 
-	double forceElastic = - elasticKoeff * tripno.position.y;
+	tripno.dbgElastic = - elasticKoeff * tripno.position.y;
 
-	double forceResistance = - tripno.velocity * tripno.velocity * resistanceKoeff;
+	tripno.dbgResistance = - ofSign(tripno.velocity) *  tripno.velocity * tripno.velocity * resistanceKoeff;
 
-	double acceleration = (signal/* as control force */ + forceElastic + forceResistance) * tripno.mass;
+	double acceleration = (signal/* as control force */ + tripno.dbgElastic + tripno.dbgResistance) * tripno.mass;
 	
 	tripno.position.y +=  tripno.velocity * dt + acceleration * dt * dt;
 
@@ -186,16 +189,17 @@ void testApp::moveSegments(int count) {
 
 //--------------------------------------------------------------
 void testApp::draw(){
+	plotSpectrum();
+	
 	drawScene();
-
-	//plotFft();
-	//plotSpectrum();
+	
+	drawSceneDebug();
 }
 
 //--------------------------------------------------------------
 void testApp::drawScene() {
 
-	ofSetColor(63, 83, 140);
+	ofSetColor(63, 83, 140, 128);
     ofFill();
 
 
@@ -207,54 +211,33 @@ void testApp::drawScene() {
 		ofRect(earthline[i]);
 	}
 
-	ofSetColor(255, 85, 84);
+	ofSetColor(255, 85, 84, 128);
     ofFill();
 	ofCircle(viewPort.width * 0.3, viewPort.height * 0.5 - tripno.position.y, viewPort.width * 0.03);
 }
 
 //--------------------------------------------------------------
-void testApp::plotFft() {
-	ofRectangle area = ofRectangle(0,0, gameField.width, gameField.y);
-	int count = fft->getBinSize();
-	int lineHeight = 2;
+void testApp::drawSceneDebug() {
+	const int lengthMul = 1;
+	int x = viewPort.width * 0.3;
+	int y = viewPort.height * 0.5 - tripno.position.y;
 
-	ofSetColor(221, 221, 227);
-	ofSetLineWidth(lineHeight);
+	ofSetColor(255, 40, 40, 128);
+	ofLine(x+1, y, x+1, y - tripno.dbgSignal * lengthMul);
 
-	float* buffer = new float[count];
+	ofSetColor(40, 255, 40, 128);
+	int elasticLength = tripno.dbgElastic * lengthMul;
+	ofLine(x, y, x, y - elasticLength);
 
-	soundMutex.lock();
-	memcpy(buffer, fftOutput, count);
-	soundMutex.unlock();
+	ofSetColor(40, 40, 255, 128);
+	ofLine(x-1, y, x-1, y - tripno.dbgResistance * lengthMul);
 
-	float maxAmp = 0.0f;
-	int maxIndex = -1;
-	for (int i = 0; i < count; i++)
-	{
-		if (maxAmp >= buffer[i])
-			continue;
-
-		maxAmp = buffer[i];
-		maxIndex = i;
-	}
-
-	for (int i = 0; i < MAX_FBAND; i++)
-	{
-		float height = buffer[i] * 200;
-		float x = i * lineHeight * 2 + lineHeight;
-		ofLine(x, 0, x, height);
-	}
-
-	ofSetColor(255, 85, 84);
-	ofDrawBitmapString(ofToString(ofGetFrameRate()) + " " + ofToString(maxAmp) + " at " + ofToString(maxIndex) + " bin size=" + ofToString(count) , 10, viewPort.height - 10);
-
-	delete[] buffer;
 }
 
 //--------------------------------------------------------------
 void testApp::plotSpectrum() {
 
-	soundMutex.lock();
+	/*soundMutex.lock();
 	vector < vector < float > > buffer(spectrum.size());
 	for (int i = 0; i < spectrum.size(); i++)
 	{
@@ -302,18 +285,20 @@ void testApp::plotSpectrum() {
 
 		ofSetColor(184, 184, 184);
 		//ofLine(i, viewPort.height, i, viewPort.height - maxFreq / maxLog * maxHeight);
-	}
+	}*/
 
+	ofSetLineWidth(1);
+
+	ofSetColor(184, 184, 184, 128);
 	const int controlBaseLine = viewPort.height - viewPort.height / 2;
 	const int signalMultiplier = 40;
 	for (int i = 0; i < pitches.size(); i++)
 	{
-		ofSetColor(184, 184, 184);
 		ofLine(i, controlBaseLine, i, controlBaseLine - control[control.size() - i - 1] * signalMultiplier);
 		ofLine(i, viewPort.height, i, viewPort.height- pitches[pitches.size() - i - 1] * signalMultiplier);
 	}
 
-	ofSetColor(184, 84, 84);
+	ofSetColor(184, 84, 84, 128);
 	int minFreqY = viewPort.height - minFreqLog * signalMultiplier;
 	int maxFreqY = viewPort.height - maxFreqLog * signalMultiplier;
 	ofLine(0, minFreqY, viewPort.width, minFreqY);

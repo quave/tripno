@@ -20,6 +20,10 @@ struct movableObject {
 
 	ofPoint position;
 	double velocity;
+
+	double dbgSignal;
+	double dbgElastic;
+	double dbgResistance;
 };
 
 class testApp : public ofBaseApp{
@@ -76,8 +80,8 @@ private:
 		void updateBackground();
 		void updateTripno(float dt);
 		void drawScene();
-		void plotFft();
 		void plotSpectrum();
+		void drawSceneDebug();
 		float smoothSignal(float rawVal, vector<float> signal);
 
 		void readConfig();
