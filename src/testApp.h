@@ -21,9 +21,10 @@ struct movableObject {
 	ofPoint position;
 	double velocity;
 
+	double elastic;
+	double resistance;
+
 	double dbgSignal;
-	double dbgElastic;
-	double dbgResistance;
 };
 
 struct t_config {
@@ -33,6 +34,7 @@ struct t_config {
 
 	double gateThreshold;
 	double maxSignalClampRate;
+	double rangeClampRate;
 };
 
 class testApp : public ofBaseApp{
@@ -82,6 +84,7 @@ private:
 
 		ofMutex soundMutex;
 
+		double getTripnoAbsoluteY();
 		void moveSegments(int index);
 		void updateBackground();
 		void updateTripno(float dt);

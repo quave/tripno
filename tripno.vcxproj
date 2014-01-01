@@ -125,6 +125,7 @@
   <ItemGroup>
     <Xml Include="data\config.xml">
       <DeploymentContent>true</DeploymentContent>
+      <SubType>Designer</SubType>
     </Xml>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

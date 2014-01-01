@@ -4,5 +4,6 @@
 	<elasticKoeff>0.5</elasticKoeff>
 	<resistanceKoeff>0.005</resistanceKoeff>
 	<gateThreshold>0.1</gateThreshold>
-	<maxSignalClampRate>0.997</maxSignalClampRate>
+  <maxSignalClampRate>0.997</maxSignalClampRate>
+  <rangeClampRate>0.002</rangeClampRate>
 </config>

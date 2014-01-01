@@ -23,7 +23,6 @@ void testApp::setup(){
 		earthline[i] = skyline[i] = ofRectangle(0,0,0,0);
     }
 
-
 	gameField = paddingTop = paddingBottom = 
 		ofRectangle(0,0,0,0);
 
@@ -63,6 +62,7 @@ void testApp::readConfig() {
 		config.resistanceKoeff = ofToDouble(xmlConfig.getValue("resistanceKoeff"));
 		config.gateThreshold = ofToDouble(xmlConfig.getValue("gateThreshold"));
 		config.maxSignalClampRate = ofToDouble(xmlConfig.getValue("maxSignalClampRate"));
+		config.rangeClampRate = ofToDouble(xmlConfig.getValue("rangeClampRate"));
 	}
 	else {
 		config.signalAmp = config.elasticKoeff = 
@@ -148,6 +148,9 @@ void testApp::updateTripno(float dt) {
 
 	float signal = 0;
 
+	double blockWidth = gameField.width / SEGMENTS_PER_VIEWPORT;
+	tripno.position.x = gameField.width * 0.3;
+
 	// pop max signal from the control data
 	if (control.size() - lastSignalIndex > 1) {
 		soundMutex.lock();
@@ -158,15 +161,23 @@ void testApp::updateTripno(float dt) {
 	signal = signal != signal ? 0 : signal;
 	tripno.dbgSignal = signal ? signal : tripno.dbgSignal;
 
-	tripno.dbgElastic = - config.elasticKoeff * tripno.position.y;
+	tripno.elastic = - config.elasticKoeff * tripno.position.y;
 
-	tripno.dbgResistance = - ofSign(tripno.velocity) *  tripno.velocity * tripno.velocity * config.resistanceKoeff;
+	tripno.resistance = - ofSign(tripno.velocity) *  tripno.velocity * tripno.velocity * config.resistanceKoeff;
 
-	double acceleration = (signal/* as control force */ + tripno.dbgElastic + tripno.dbgResistance) * tripno.mass;
+	double acceleration = (signal/* as control force */ + tripno.elastic + tripno.resistance) * tripno.mass;
 	
 	tripno.position.y +=  tripno.velocity * dt + acceleration * dt * dt;
 
 	tripno.velocity += acceleration * dt;
+
+	int blockIndex = tripno.position.x / blockWidth;
+
+	int tripnoY = getTripnoAbsoluteY();
+	if (tripnoY <= gameField.y + ceilHeights[blockIndex] ||
+		tripnoY >= gameField.y + gameField.height - floorHeights[blockIndex]) {
+		tripno.velocity *= -1;
+	}
 }
 
 //--------------------------------------------------------------
@@ -217,7 +228,11 @@ void testApp::drawScene() {
 
 	ofSetColor(255, 85, 84, 128);
     ofFill();
-	ofCircle(viewPort.width * 0.3, viewPort.height * 0.5 - tripno.position.y, viewPort.width * 0.03);
+	ofCircle(tripno.position.x, getTripnoAbsoluteY(), viewPort.width * 0.03);
+}
+
+double testApp::getTripnoAbsoluteY() {
+	return viewPort.height * 0.5 - tripno.position.y;
 }
 
 //--------------------------------------------------------------
@@ -230,11 +245,11 @@ void testApp::drawSceneDebug() {
 	ofLine(x+1, y, x+1, y - tripno.dbgSignal * lengthMul);
 
 	ofSetColor(40, 255, 40, 128);
-	int elasticLength = tripno.dbgElastic * lengthMul;
+	int elasticLength = tripno.elastic * lengthMul;
 	ofLine(x, y, x, y - elasticLength);
 
 	ofSetColor(40, 40, 255, 128);
-	ofLine(x-1, y, x-1, y - tripno.dbgResistance * lengthMul);
+	ofLine(x-1, y, x-1, y - tripno.resistance * lengthMul);
 
 }
 
@@ -392,7 +407,6 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 	double delta = 0;
 
 	// Calculate delata (control signal)
-	const double borderClampSpeed = 0.001;
 	if (freq > 0)
 	{
 		freqLog = log(freq);
@@ -401,14 +415,14 @@ void testApp::audioIn(float * input, int bufferSize, int nChannels){
 			minFreqLog = freqLog;
 		}
 		else {
-			minFreqLog *= 1.0 + borderClampSpeed;
+			minFreqLog *= 1.0 + config.rangeClampRate;
 		}
 
 		if (freqLog > maxFreqLog) {
 			maxFreqLog = freqLog;
 		}
 		else {
-			maxFreqLog *= 1.0 - borderClampSpeed;
+			maxFreqLog *= 1.0 - config.rangeClampRate;
 		}
 
 		double centralFreqLog = (minFreqLog + maxFreqLog) /2;
